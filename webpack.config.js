@@ -3,11 +3,13 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+const ExtensionReloader = require("webpack-extension-reloader");
+const webpack = require("webpack");
 
 const mode = process.env.NODE_ENV || "development";
 const prod = mode === "production";
 
-module.exports = {
+const config = {
   context: path.resolve(__dirname, "./src"),
   entry: {
     options: ["./options/options.js"],
@@ -81,5 +83,27 @@ module.exports = {
       filename: "[name].css",
     }),
   ],
-  devtool: prod ? false : "source-map",
+  stats: {
+    assetsSort: "!size",
+    children: false,
+    usedExports: false,
+    modules: false,
+    entrypoints: false,
+    // Hide source maps from output
+    excludeAssets: [/\.*\.map/],
+  },
 };
+if (!prod) {
+  config.plugins.push(
+    new ExtensionReloader({
+      reloadPage: true,
+      entries: {
+        contentScript: "content",
+        background: "background",
+        extensionPage: "options",
+      },
+    })
+  );
+}
+
+module.exports = config;
